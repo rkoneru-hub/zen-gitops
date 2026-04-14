@@ -1,0 +1,15 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Helm chart lock (re-generated on helm dependency update)
+**/Chart.lock
+**/charts/*.tgz
+
+# Sensitive override files — never commit real secrets
+**/secret-values.yaml
+**/values-secret*.yaml

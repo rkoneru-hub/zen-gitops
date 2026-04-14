@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pharma-ui-dev
+  namespace: argocd
+  labels:
+    env: dev
+    app: pharma-ui
+    managed-by: terraform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: pharma
+
+  source:
+    repoURL: https://github.com/ravdy/zen-gitops.git
+    targetRevision: HEAD
+    path: k8s-manifests/pharma-ui
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  revisionHistoryLimit: 10

@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pharma-prod
+  namespace: argocd
+  labels:
+    env: prod
+    managed-by: terraform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: pharma
+
+  source:
+    repoURL: https://github.com/ravdy/zen-gitops.git
+    targetRevision: HEAD
+    path: envs/prod
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+
+  revisionHistoryLimit: 10

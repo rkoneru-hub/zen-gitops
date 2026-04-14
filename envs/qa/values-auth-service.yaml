@@ -1,0 +1,69 @@
+replicaCount: 1
+
+image:
+  repository: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/pharma-auth-service
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8081
+  targetPort: 8081
+
+ingress:
+  enabled: false
+  className: nginx
+  host: qa.pharma.internal
+  path: /auth
+  pathType: Prefix
+
+resources:
+  requests:
+    cpu: 150m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+livenessProbe:
+  path: /actuator/health
+  port: 8081
+  initialDelaySeconds: 60
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  path: /actuator/health/readiness
+  port: 8081
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+configmap:
+  SPRING_PROFILES_ACTIVE: qa
+  DB_HOST: <RDS_ENDPOINT>
+  LOG_LEVEL: INFO
+  SERVER_PORT: "8081"
+  TOKEN_EXPIRATION_MS: "86400000"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+
+envFrom:
+  - secretRef:
+      name: db-credentials
+  - secretRef:
+      name: jwt-secret
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: auth-service

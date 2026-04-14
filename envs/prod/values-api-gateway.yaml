@@ -1,0 +1,85 @@
+replicaCount: 2
+
+image:
+  repository: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/pharma-api-gateway
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  host: pharma.internal
+  path: /api(/|$)(.*)
+  pathType: Prefix
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+livenessProbe:
+  path: /actuator/health
+  port: 8080
+  initialDelaySeconds: 90
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  path: /actuator/health/readiness
+  port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+configmap:
+  SPRING_PROFILES_ACTIVE: prod
+  DB_HOST: <RDS_ENDPOINT>
+  LOG_LEVEL: WARN
+  AUTH_SERVICE_URL: "http://auth-service:8080"
+  SERVER_PORT: "8080"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+
+envFrom:
+  - secretRef:
+      name: db-credentials
+  - secretRef:
+      name: jwt-secret
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - api-gateway
+        topologyKey: kubernetes.io/hostname
+
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<AWS_ACCOUNT_ID>:role/pharma-prod-gitlab-runner-role
+  name: api-gateway
