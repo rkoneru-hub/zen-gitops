@@ -14,7 +14,7 @@ ingress:
   annotations:
     # Set to "true" when TLS certificate is configured
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-  host: dev.pharma.internal
+  host: ""
   path: /
   pathType: Prefix
 resources:
