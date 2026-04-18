@@ -1,10 +1,8 @@
-replicaCount: 1
-
-fullnameOverride: auth-service
+replicaCount: 2
 
 image:
-  repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/auth-service
-  tag: v1.0.0
+  repository: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/pharma-auth-service
+  tag: latest
   pullPolicy: Always
 
 service:
@@ -15,28 +13,28 @@ service:
 ingress:
   enabled: false
   className: nginx
-  host: prod.pharma.internal
+  host: pharma.internal
   path: /auth
   pathType: Prefix
 
 resources:
   requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 500m
+    cpu: 250m
     memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
 
 autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 3
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
   targetCPUUtilizationPercentage: 70
 
 livenessProbe:
   path: /actuator/health
   port: 8081
-  initialDelaySeconds: 60
+  initialDelaySeconds: 90
   periodSeconds: 15
   timeoutSeconds: 5
   failureThreshold: 3
@@ -45,7 +43,7 @@ livenessProbe:
 readinessProbe:
   path: /actuator/health/readiness
   port: 8081
-  initialDelaySeconds: 30
+  initialDelaySeconds: 60
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
@@ -53,10 +51,10 @@ readinessProbe:
 
 configmap:
   SPRING_PROFILES_ACTIVE: prod
-  DB_HOST: pharma-prod-postgres.cs3c424yurej.us-east-1.rds.amazonaws.com
-  LOG_LEVEL: DEBUG
+  DB_HOST: <RDS_ENDPOINT>
+  LOG_LEVEL: WARN
   SERVER_PORT: "8081"
-  TOKEN_EXPIRATION_MS: "86400000"
+  TOKEN_EXPIRATION_MS: "28800000"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
 
 envFrom:
@@ -65,13 +63,16 @@ envFrom:
   - secretRef:
       name: jwt-secret
 
-volumeMounts:
-  - name: tmp
-    mountPath: /tmp
-
-volumes:
-  - name: tmp
-    emptyDir: {}
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - auth-service
+        topologyKey: kubernetes.io/hostname
 
 serviceAccount:
   create: true

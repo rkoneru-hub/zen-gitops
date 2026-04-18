@@ -1,8 +1,10 @@
 replicaCount: 1
 
+fullnameOverride: pharma-ui
+
 image:
-  repository: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/pharma-pharma-ui
-  tag: latest
+  repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/pharma-ui
+  tag: v1.0.0
   pullPolicy: Always
 
 service:
@@ -14,7 +16,8 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Set to "true" when TLS certificate is configured
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
   host: qa.pharma.internal
   path: /
   pathType: Prefix
@@ -52,9 +55,26 @@ readinessProbe:
   successThreshold: 1
 
 configmap:
-  API_BASE_URL: "http://qa.pharma.internal/api"
-  AUTH_BASE_URL: "http://qa.pharma.internal/auth"
+  API_BASE_URL: "/api"
+  AUTH_BASE_URL: "/api/auth"
   ENV: qa
+
+# Nginx requires writable directories even with readOnlyRootFilesystem: true
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: nginx-cache
+    mountPath: /var/cache/nginx
+  - name: nginx-run
+    mountPath: /var/run
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: nginx-cache
+    emptyDir: {}
+  - name: nginx-run
+    emptyDir: {}
 
 serviceAccount:
   create: true

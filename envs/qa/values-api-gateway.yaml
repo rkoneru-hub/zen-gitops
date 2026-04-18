@@ -1,8 +1,10 @@
 replicaCount: 1
 
+fullnameOverride: api-gateway
+
 image:
-  repository: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/pharma-api-gateway
-  tag: latest
+  repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/api-gateway
+  tag: v1.0.0
   pullPolicy: Always
 
 service:
@@ -13,23 +15,20 @@ service:
 ingress:
   enabled: true
   className: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/use-regex: "true"
-  host: qa.pharma.internal
-  path: /api(/|$)(.*)
+  host: a0ffda4d239d941549d518de18c19f6f-cf2f70374c2e5a74.elb.us-east-1.amazonaws.com
+  path: /api
   pathType: Prefix
 
 resources:
   requests:
-    cpu: 150m
+    cpu: 100m
     memory: 256Mi
   limits:
     cpu: 500m
     memory: 512Mi
 
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 70
@@ -54,10 +53,12 @@ readinessProbe:
 
 configmap:
   SPRING_PROFILES_ACTIVE: qa
-  DB_HOST: <RDS_ENDPOINT>
-  LOG_LEVEL: INFO
-  AUTH_SERVICE_URL: "http://auth-service:8080"
+  LOG_LEVEL: DEBUG
   SERVER_PORT: "8080"
+  # These match the fullnameOverride values of each service
+  AUTH_SERVICE_URL: "http://auth-service:8081"
+  DRUG_CATALOG_URL: "http://drug-catalog-service:8082"
+  NOTIFICATION_URL: "http://notification-service:3000"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
 
 envFrom:
@@ -66,8 +67,16 @@ envFrom:
   - secretRef:
       name: jwt-secret
 
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+
 serviceAccount:
   create: true
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::<AWS_ACCOUNT_ID>:role/pharma-qa-gitlab-runner-role
+    eks.amazonaws.com/role-arn: arn:aws:iam::873135413040:role/pharma-qa-eks-role
   name: api-gateway

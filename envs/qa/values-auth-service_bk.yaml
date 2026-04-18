@@ -1,42 +1,40 @@
 replicaCount: 1
 
-fullnameOverride: notification-service
-
 image:
-  repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/notification-service
-  tag: v1.0.0
+  repository: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/pharma-auth-service
+  tag: latest
   pullPolicy: Always
 
 service:
   type: ClusterIP
-  port: 3000
-  targetPort: 3000
+  port: 8081
+  targetPort: 8081
 
 ingress:
   enabled: false
   className: nginx
-  host: prod.pharma.internal
-  path: /notifications
+  host: qa.pharma.internal
+  path: /auth
   pathType: Prefix
 
 resources:
   requests:
-    cpu: 50m
-    memory: 128Mi
-  limits:
-    cpu: 200m
+    cpu: 150m
     memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 
 autoscaling:
-  enabled: false
+  enabled: true
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 70
 
 livenessProbe:
   path: /actuator/health
-  port: 3000
-  initialDelaySeconds: 20
+  port: 8081
+  initialDelaySeconds: 60
   periodSeconds: 15
   timeoutSeconds: 5
   failureThreshold: 3
@@ -44,27 +42,28 @@ livenessProbe:
 
 readinessProbe:
   path: /actuator/health/readiness
-  port: 3000
-  initialDelaySeconds: 10
+  port: 8081
+  initialDelaySeconds: 30
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
   successThreshold: 1
 
 configmap:
-  NODE_ENV: production
-  PORT: "3000"
-  LOG_LEVEL: debug
-  SMTP_HOST: "smtp.example.com"
-  SMTP_PORT: "587"
-  EMAIL_FROM: "noreply-prod@example.com"
-  DB_HOST: pharma-prod-postgres.cs3c424yurej.us-east-1.rds.amazonaws.com
+  SPRING_PROFILES_ACTIVE: qa
+  DB_HOST: <RDS_ENDPOINT>
+  LOG_LEVEL: INFO
+  SERVER_PORT: "8081"
+  TOKEN_EXPIRATION_MS: "86400000"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
 
 envFrom:
   - secretRef:
       name: db-credentials
+  - secretRef:
+      name: jwt-secret
 
 serviceAccount:
   create: true
   annotations: {}
-  name: notification-service
+  name: auth-service

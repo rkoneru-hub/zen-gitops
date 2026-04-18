@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: manufacturing-service-dev
+  name: manufacturing-service-prod
   namespace: argocd
   labels:
-    env: dev
+    env: prod
     app: manufacturing-service
     managed-by: terraform
   finalizers:
@@ -18,11 +18,11 @@ spec:
     path: helm-charts
     helm:
       valueFiles:
-        - ../envs/dev/values-manufacturing-service.yaml
+        - ../envs/prod/values-manufacturing-service.yaml
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: dev
+    namespace: prod
 
   syncPolicy:
     automated:

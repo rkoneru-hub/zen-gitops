@@ -1,11 +1,11 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: manufacturing-service-dev
+  name: api-gateway-qa
   namespace: argocd
   labels:
-    env: dev
-    app: manufacturing-service
+    env: qa
+    app: api-gateway
     managed-by: terraform
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -13,16 +13,16 @@ spec:
   project: pharma
 
   source:
-    repoURL: https://github.com/chandika-s/zen-gitops.git
+    repoURL: https://github.com/ravdy/zen-gitops.git
     targetRevision: HEAD
     path: helm-charts
     helm:
       valueFiles:
-        - ../envs/dev/values-manufacturing-service.yaml
+        - ../envs/qa/values-api-gateway.yaml
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: dev
+    namespace: qa
 
   syncPolicy:
     automated:

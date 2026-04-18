@@ -1,31 +1,31 @@
 replicaCount: 1
 
-fullnameOverride: notification-service
+fullnameOverride: inventory-service
 
 image:
-  repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/notification-service
+  repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/inventory-service
   tag: v1.0.0
   pullPolicy: Always
 
 service:
   type: ClusterIP
-  port: 3000
-  targetPort: 3000
+  port: 8083
+  targetPort: 8083
 
 ingress:
   enabled: false
   className: nginx
   host: prod.pharma.internal
-  path: /notifications
+  path: /inventory
   pathType: Prefix
 
 resources:
   requests:
-    cpu: 50m
-    memory: 128Mi
-  limits:
-    cpu: 200m
+    cpu: 100m
     memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 
 autoscaling:
   enabled: false
@@ -35,8 +35,8 @@ autoscaling:
 
 livenessProbe:
   path: /actuator/health
-  port: 3000
-  initialDelaySeconds: 20
+  port: 8083
+  initialDelaySeconds: 90
   periodSeconds: 15
   timeoutSeconds: 5
   failureThreshold: 3
@@ -44,27 +44,33 @@ livenessProbe:
 
 readinessProbe:
   path: /actuator/health/readiness
-  port: 3000
-  initialDelaySeconds: 10
+  port: 8083
+  initialDelaySeconds: 45
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
   successThreshold: 1
 
 configmap:
-  NODE_ENV: production
-  PORT: "3000"
-  LOG_LEVEL: debug
-  SMTP_HOST: "smtp.example.com"
-  SMTP_PORT: "587"
-  EMAIL_FROM: "noreply-prod@example.com"
+  SPRING_PROFILES_ACTIVE: prod
   DB_HOST: pharma-prod-postgres.cs3c424yurej.us-east-1.rds.amazonaws.com
+  LOG_LEVEL: DEBUG
+  SERVER_PORT: "8083"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
 
 envFrom:
   - secretRef:
       name: db-credentials
 
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+
 serviceAccount:
   create: true
   annotations: {}
-  name: notification-service
+  name: inventory-service
