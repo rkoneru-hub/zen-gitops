@@ -2,7 +2,7 @@ replicaCount: 1
 fullnameOverride: api-gateway
 image:
   repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/api-gateway
-  tag: sha-0a7a6dd
+  tag: sha-5017de5
   pullPolicy: Always
 service:
   type: ClusterIP
@@ -11,7 +11,8 @@ service:
 ingress:
   enabled: true
   className: nginx
-  host: a0ffda4d239d941549d518de18c19f6f-cf2f70374c2e5a74.elb.us-east-1.amazonaws.com
+  annotations: {}
+  host: ""
   path: /api
   pathType: Prefix
 resources:
