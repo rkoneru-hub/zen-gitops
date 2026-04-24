@@ -216,3 +216,56 @@ kubectl logs -l app=fluent-bit -n dev --tail=30
 ### Image
 
 `fluent/fluent-bit:latest` — requires `latest` (or ≥ 4.0) for `http_api_key` support in the ES output plugin.
+
+---
+
+## How Fluent Bit Works in EKS
+
+### DaemonSet — one pod per node
+
+Kubernetes schedules one Fluent Bit pod on every EKS worker node. Since all container logs live on the node's filesystem at `/var/log/containers/`, each Fluent Bit pod only needs to read the logs from its own node.
+
+```
+Node 1  →  fluent-bit pod  →  reads /var/log/containers/* on Node 1
+Node 2  →  fluent-bit pod  →  reads /var/log/containers/* on Node 2
+Node 3  →  fluent-bit pod  →  reads /var/log/containers/* on Node 3
+```
+
+### The pipeline (inside each pod)
+
+```
+/var/log/containers/*.log
+        ↓
+   [INPUT: tail]           — reads new log lines, tracks position in SQLite DB
+        ↓
+   [FILTER: kubernetes]    — enriches each line with pod name, namespace, labels
+        ↓
+   [FILTER: grep]          — keeps only dev namespace, drops fluent-bit's own logs
+        ↓
+   [FILTER: lua]           — reads the 'app' label → sets _service_name = "api-gateway"
+        ↓
+   [OUTPUT: elasticsearch] — ships to Elastic Cloud, creates index api-gateway-2026.04.24
+```
+
+### Helm chart structure
+
+| File | What it creates |
+|---|---|
+| `templates/rbac.yaml` | ServiceAccount + ClusterRole so the pod can read pod/node metadata from the K8s API |
+| `templates/configmap.yaml` | The actual Fluent Bit config (`fluent-bit.conf`, `parsers.conf`, Lua script) — mounted into the pod at `/fluent-bit/etc/` |
+| `templates/daemonset.yaml` | The DaemonSet — mounts host `/var/log` read-only, mounts the ConfigMap, pulls the API key from the Secret |
+
+The Secret (`fluent-bit-elastic-credentials`) is managed outside the chart — the chart just references it by name. This keeps the API key out of git.
+
+### Why `values-fluent-bit.yaml` matters
+
+```yaml
+elasticsearch:
+  host: 97f1fa5d7d9d4d58ba3926dfb84ebeb0.us-central1.gcp.cloud.es.io
+  port: 443
+
+fluentbit:
+  filterNamespace: dev   # only collect from this namespace
+```
+
+These values get injected into the ConfigMap template at deploy time, so changing the target environment (e.g. `qa`) just means a different values file — the chart stays the same.
