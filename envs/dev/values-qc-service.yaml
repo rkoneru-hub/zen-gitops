@@ -2,7 +2,7 @@ replicaCount: 1
 fullnameOverride: qc-service
 image:
   repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/qc-service
-  tag: sha-0000000
+  tag: sha-27b663f
   pullPolicy: Always
 service:
   type: ClusterIP
