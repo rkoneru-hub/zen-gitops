@@ -1,0 +1,14 @@
+apiVersion: v2
+name: fluent-bit
+description: Fluent Bit DaemonSet for EKS log shipping to Elastic Cloud
+type: application
+version: 1.0.0
+appVersion: "latest"
+keywords:
+  - logging
+  - fluent-bit
+  - elasticsearch
+  - observability
+maintainers:
+  - name: Pharma DevOps Team
+    email: devops@pharma.com

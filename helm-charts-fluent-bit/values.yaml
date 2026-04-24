@@ -1,0 +1,36 @@
+image:
+  repository: fluent/fluent-bit
+  tag: latest
+  pullPolicy: Always
+
+namespace: dev
+
+fluentbit:
+  flush: 5
+  logLevel: info
+  memBufLimit: 50MB
+  db: /var/lib/fluent-bit/flb_kube.db
+  filterNamespace: dev
+
+elasticsearch:
+  host: ""
+  port: 443
+  tls: true
+  credentialsSecret: fluent-bit-elastic-credentials
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - operator: Exists
+    effect: NoExecute
+  - operator: Exists
+    effect: NoSchedule

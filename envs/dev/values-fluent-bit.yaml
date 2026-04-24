@@ -1,0 +1,27 @@
+image:
+  repository: fluent/fluent-bit
+  tag: latest
+  pullPolicy: Always
+
+namespace: dev
+
+fluentbit:
+  flush: 5
+  logLevel: info
+  memBufLimit: 50MB
+  db: /var/lib/fluent-bit/flb_kube.db
+  filterNamespace: dev
+
+elasticsearch:
+  host: 97f1fa5d7d9d4d58ba3926dfb84ebeb0.us-central1.gcp.cloud.es.io
+  port: 443
+  tls: true
+  credentialsSecret: fluent-bit-elastic-credentials
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
