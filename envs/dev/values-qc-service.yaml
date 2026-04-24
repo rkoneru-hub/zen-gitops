@@ -1,19 +1,18 @@
 replicaCount: 1
-fullnameOverride: api-gateway
+fullnameOverride: qc-service
 image:
-  repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/api-gateway
-  tag: sha-58ffbb1
+  repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/qc-service
+  tag: sha-0000000   # CI overwrites this on first successful build
   pullPolicy: Always
 service:
   type: ClusterIP
-  port: 8080
-  targetPort: 8080
+  port: 8086
+  targetPort: 8086
 ingress:
-  enabled: true
+  enabled: false
   className: nginx
-  annotations: {}
-  host: ""
-  path: /api
+  host: dev.pharma.internal
+  path: /qc
   pathType: Prefix
 resources:
   requests:
@@ -29,7 +28,7 @@ autoscaling:
   targetCPUUtilizationPercentage: 70
 livenessProbe:
   path: /actuator/health
-  port: 8080
+  port: 8086
   initialDelaySeconds: 60
   periodSeconds: 15
   timeoutSeconds: 5
@@ -37,7 +36,7 @@ livenessProbe:
   successThreshold: 1
 readinessProbe:
   path: /actuator/health/readiness
-  port: 8080
+  port: 8086
   initialDelaySeconds: 30
   periodSeconds: 10
   timeoutSeconds: 5
@@ -46,18 +45,8 @@ readinessProbe:
 configmap:
   SPRING_PROFILES_ACTIVE: dev
   LOG_LEVEL: DEBUG
-  SERVER_PORT: "8080"
-  # These match the fullnameOverride values of each service
-  AUTH_SERVICE_URL: "http://auth-service:8081"
-  DRUG_CATALOG_URL: "http://drug-catalog-service:8082"
-  NOTIFICATION_URL: "http://notification-service:3000"
-  QC_SERVICE_URL: "http://qc-service:8086"
+  SERVER_PORT: "8086"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
-envFrom:
-  - secretRef:
-      name: db-credentials
-  - secretRef:
-      name: jwt-secret
 volumeMounts:
   - name: tmp
     mountPath: /tmp
@@ -66,6 +55,5 @@ volumes:
     emptyDir: {}
 serviceAccount:
   create: true
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::873135413040:role/pharma-dev-eks-role
-  name: api-gateway
+  annotations: {}
+  name: qc-service
