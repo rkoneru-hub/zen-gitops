@@ -1,4 +1,4 @@
-replicaCount: 3
+replicaCount: 1
 fullnameOverride: inventory-service
 image:
   repository: 873135413040.dkr.ecr.us-east-1.amazonaws.com/inventory-service
