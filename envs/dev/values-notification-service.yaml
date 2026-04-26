@@ -35,7 +35,7 @@ livenessProbe:
   failureThreshold: 3
   successThreshold: 1
 readinessProbe:
-  path: /actuator/health/readiness
+  path: /wrong-readiness-path
   port: 3000
   initialDelaySeconds: 10
   periodSeconds: 10
