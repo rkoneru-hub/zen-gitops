@@ -1,26 +1,21 @@
 replicaCount: 1
-
 # fullnameOverride ensures the Kubernetes service name matches the service directory name
 # and matches the default URL expected by api-gateway
 fullnameOverride: drug-catalog-service
-
 image:
   repository: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/drug-catalog-service
-  tag: v1.0.0
+  tag: sha-a0017b8
   pullPolicy: Always
-
 service:
   type: ClusterIP
   port: 8082
   targetPort: 8082
-
 ingress:
   enabled: false
   className: nginx
   host: qa.pharma.internal
   path: /catalog
   pathType: Prefix
-
 resources:
   requests:
     cpu: 100m
@@ -28,13 +23,11 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
-
 autoscaling:
   enabled: false
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 70
-
 livenessProbe:
   path: /actuator/health
   port: 8082
@@ -44,7 +37,6 @@ livenessProbe:
   timeoutSeconds: 5
   failureThreshold: 3
   successThreshold: 1
-
 readinessProbe:
   path: /actuator/health/readiness
   port: 8082
@@ -53,26 +45,21 @@ readinessProbe:
   timeoutSeconds: 5
   failureThreshold: 3
   successThreshold: 1
-
 configmap:
   SPRING_PROFILES_ACTIVE: qa
   DB_HOST: <RDS_ENDPOINT>
   LOG_LEVEL: INFO
   SERVER_PORT: "8082"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
-
 envFrom:
   - secretRef:
       name: db-credentials
-
 volumeMounts:
   - name: tmp
     mountPath: /tmp
-
 volumes:
   - name: tmp
     emptyDir: {}
-
 serviceAccount:
   create: true
   annotations: {}
