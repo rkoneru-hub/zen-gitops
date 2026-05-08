@@ -1,8 +1,4 @@
 # Interview Questions & Answers — Part 2
-### Groups A, C, G, H, I
-> Based on zen-gitops Pharma GitOps Repository
-
----
 
 ## Table of Contents
 
