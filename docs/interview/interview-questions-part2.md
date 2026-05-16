@@ -1377,7 +1377,7 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: dev            # dev team can ONLY deploy to dev namespace
   sourceRepos:
-    - "https://github.com/ravdy/zen-gitops.git"
+    - "https://github.com/rkoneru-hub/zen-gitops.git"
   roles:
     - name: dev-deployer
       policies:
